@@ -1,3 +1,7 @@
+package telegrambot;
+
+import telegrambot.botfunctions.BotFunction;
+import telegrambot.botfunctions.StartMenu;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -8,20 +12,25 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class TeleBot extends TelegramLongPollingBot {
+public class MainBot extends TelegramLongPollingBot {
 
     private static final int RECONNECT_PAUSE =  10000;
 
-    private static HashMap<Long, ArrayList<BotFunction>> users = new HashMap<>();
+    private static final int WAIT_PAUSE =  5 * 60 * 1000;
 
-    private static TeleBot bot;
-    private String userName;
-    private String token;
+    private static MainBot instance;
+    private HashMap<Long, ArrayList<BotFunction>> users = new HashMap<>();
+
+    private ArrayList<Meeting> meetings = new ArrayList<>();
+    private final String userName;
+    private final String token;
 
 
-    public TeleBot(String userName, String token) {
+    public MainBot(String userName, String token) {
         this.userName = userName;
         this.token = token;
+
+        instance = this;
     }
 
     @Override
@@ -56,7 +65,7 @@ public class TeleBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                if (messageText.equalsIgnoreCase("toStart")) {
+                if (messageText.equalsIgnoreCase("/back")) {
                     if (menus.size() > 1) {
                         menus.remove(menus.size() - 1);
                         menus.get(menus.size() - 1).onStart(id);
@@ -102,16 +111,52 @@ public class TeleBot extends TelegramLongPollingBot {
         }
     }
 
-    public static void setBot(TeleBot bot) {
-        TeleBot.bot = bot;
+    public static void setInstance(MainBot instance) {
+        MainBot.instance = instance;
     }
 
-    public static TeleBot getBot() {
-        return bot;
+    public static MainBot getInstance() {
+        return instance;
     }
 
-    public static void addBotFunctionToUser(long id, BotFunction botFunction) {
+    public void addBotFunctionToUser(long id, BotFunction botFunction) {
         users.get(id).add(botFunction);
+    }
+
+    public void initSendingBotThread() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    long time = System.currentTimeMillis();
+
+                    for (Meeting meeting: meetings) {
+                        if (meeting.getTime() > time && !meeting.isSend()) {
+                            meeting.updateUsers();
+
+                            String answer = CSVReader.getInstance().getText("invite-message");
+                            answer.replace("%n", meeting.getName());
+                            answer.replace("%l", meeting.getLink());
+
+                            for (long userId: meeting.getUsers()) {
+                                instance.sendMsg(userId, answer);
+                            }
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(WAIT_PAUSE);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+        thread.start();
+    }
+
+    public void loadMeetings() {
+        // Here need to load existing meetings by GoogleSheetsAPI
     }
 
 }

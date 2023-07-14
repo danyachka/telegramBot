@@ -1,9 +1,14 @@
+package telegrambot.botfunctions;
+
+import telegrambot.CSVReader;
+import telegrambot.MainBot;
+
 public class StartMenu implements BotFunction {
 
     public void onStart(Long id) {
         String answer = CSVReader.getInstance().getText("main-start");
 
-        TeleBot.getBot().sendMsg(id, answer);
+        MainBot.getInstance().sendMsg(id, answer);
     }
 
     @Override
@@ -20,11 +25,11 @@ public class StartMenu implements BotFunction {
         }
 
         if (answer != null) {
-            TeleBot.getBot().sendMsg(id, answer);
+            MainBot.getInstance().sendMsg(id, answer);
         }
         if (botFunction != null) {
             botFunction.onStart(id);
-            TeleBot.addBotFunctionToUser(id, botFunction);
+            MainBot.getInstance().addBotFunctionToUser(id, botFunction);
         }
     }
 }

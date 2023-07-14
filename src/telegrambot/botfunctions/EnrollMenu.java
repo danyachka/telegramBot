@@ -1,9 +1,14 @@
+package telegrambot.botfunctions;
+
+import telegrambot.CSVReader;
+import telegrambot.MainBot;
+
 public class EnrollMenu implements BotFunction {
     @Override
     public void onStart(Long id) {
         String answer = CSVReader.getInstance().getText("enroll-start");
 
-        TeleBot.getBot().sendMsg(id, answer);
+        MainBot.getInstance().sendMsg(id, answer);
     }
 
     @Override

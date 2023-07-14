@@ -1,3 +1,5 @@
+package telegrambot.botfunctions;
+
 public interface BotFunction {
 
     public void onStart(Long id);
