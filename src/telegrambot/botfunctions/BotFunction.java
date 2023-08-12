@@ -1,8 +1,10 @@
 package telegrambot.botfunctions;
 
+import telegrambot.User;
+
 public interface BotFunction {
 
-    public void onStart(Long id);
+    public void onStart(User user);
 
-    public void onUpdate(Long id, String messageText);
+    public void onUpdate(User user, String messageText);
 }

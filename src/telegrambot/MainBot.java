@@ -1,5 +1,6 @@
 package telegrambot;
 
+import org.telegram.telegrambots.meta.api.objects.Message;
 import telegrambot.botfunctions.BotFunction;
 import telegrambot.botfunctions.StartMenu;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -51,8 +52,11 @@ public class MainBot extends TelegramLongPollingBot {
         {
             if (update.getMessage().hasText())
             {
-                String messageText = update.getMessage().getText();
-                long id = update.getMessage().getChatId();
+                Message message = update.getMessage();
+                String messageText = message.getText();
+
+                User user = new User(message.getFrom().getUserName(), message.getChatId(), message.getFrom().getId());
+                long id = user.getChatId();
 
                 ArrayList<BotFunction> menus = users.get(id);
 
@@ -61,14 +65,14 @@ public class MainBot extends TelegramLongPollingBot {
                     menus = new ArrayList<>();
                     menus.add(thisMenu);
                     users.put(id, menus);
-                    thisMenu.onStart(id);
+                    thisMenu.onStart(user);
                     return;
                 }
 
                 if (messageText.equalsIgnoreCase("/back")) {
                     if (menus.size() > 1) {
                         menus.remove(menus.size() - 1);
-                        menus.get(menus.size() - 1).onStart(id);
+                        menus.get(menus.size() - 1).onStart(user);
                     } else {
                         this.sendMsg(id, "Вы в начале");
                     }
@@ -76,7 +80,7 @@ public class MainBot extends TelegramLongPollingBot {
                 }
                 BotFunction currentMenu = menus.get(menus.size() - 1);
 
-                currentMenu.onUpdate(id, messageText);
+                currentMenu.onUpdate(user, messageText);
             }
         }
     }
@@ -123,6 +127,11 @@ public class MainBot extends TelegramLongPollingBot {
         users.get(id).add(botFunction);
     }
 
+    public void removeLastBotFunction(long id) {
+        ArrayList<BotFunction> list = users.get(id);
+        list.remove(list.size() - 1);
+    }
+
     public void initSendingBotThread() {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -138,8 +147,8 @@ public class MainBot extends TelegramLongPollingBot {
                             answer.replace("%n", meeting.getName());
                             answer.replace("%l", meeting.getLink());
 
-                            for (long userId: meeting.getUsers()) {
-                                instance.sendMsg(userId, answer);
+                            for (User user: meeting.getUsers()) {
+                                instance.sendMsg(user.getChatId(), answer);
                             }
                         }
                     }
@@ -153,6 +162,19 @@ public class MainBot extends TelegramLongPollingBot {
             }
         });
         thread.start();
+    }
+
+    public Meeting getMeeting(String code) {
+        for (Meeting meeting: meetings) {
+            if (meeting.getCode().equals(code)) {
+                return meeting;
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<Meeting> getMeetings() {
+        return meetings;
     }
 
     public void loadMeetings() {

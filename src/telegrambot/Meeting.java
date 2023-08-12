@@ -4,20 +4,26 @@ import java.util.ArrayList;
 
 public class Meeting {
 
-    private String name;
+    private final String code;
 
-    private long time;
+    private final String name;
 
-    private String link;
+    private final long time;
+
+    private final String description;
+
+    private final String link;
 
     private boolean isSend = false;
 
-    private ArrayList<Long> users = new ArrayList<>();
+    private ArrayList<User> users = new ArrayList<>();
 
-    public Meeting(String name, long time, String link) {
+    public Meeting(String name, long time, String link, String description, String code) {
+        this.code = code;
         this.name = name;
         this.time = time;
         this.link = link;
+        this.description = description;
     }
 
     public String getName() {
@@ -36,12 +42,28 @@ public class Meeting {
         isSend = true;
     }
 
-    public ArrayList<Long> getUsers() {
+    public ArrayList<User> getUsers() {
         return users;
     }
 
     public String getLink() {
         return link;
+    }
+
+    public void setSend(boolean send) {
+        isSend = send;
+    }
+
+    public void setUsers(ArrayList<User> users) {
+        this.users = users;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCode() {
+        return code;
     }
 
     public void updateUsers() {
